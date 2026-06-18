@@ -1,0 +1,121 @@
+################### DARPAN Filebeat Configuration #######################
+
+filebeat.inputs:
+
+  - type: log
+    enabled: true
+    id: cowrie-json-logs
+
+    paths:
+      - /cowrie/logs/cowrie.json
+      - /cowrie/logs/cowrie.json.*
+
+    # Each line is a complete JSON object
+    json.keys_under_root: true
+    json.add_error_key: true
+    json.message_key: message
+    json.overwrite_keys: false
+
+    # Do not attempt multiline — one JSON object per line
+    multiline.enabled: false
+
+    # Metadata fields added to every event
+    fields:
+      darpan_source: cowrie
+      node_id: reflector-01
+      data_type: honeypot_log
+
+    fields_under_root: false
+
+    # Tail file from current position (not re-read entire file on restart)
+    tail_files: false
+
+    # Scan for new log files every 10 seconds
+    scan_frequency: 10s
+
+    # Backoff settings for log rotation
+    backoff: 1s
+    max_backoff: 10s
+    backoff_factor: 2
+
+    # Close file if inactive for 5 minutes
+    close_inactive: 5m
+
+    # Do not close removed/renamed files immediately (allow log rotation)
+    close_removed: false
+    close_renamed: false
+
+    # Keep harvester open on EOF (wait for new lines)
+    clean_removed: false
+
+    # Encoding
+    encoding: utf-8
+
+    # Exclude rotated/archived logs older than 7 days
+    ignore_older: 168h
+
+    # Exclude empty files
+    ignore_files:
+      - "*.gz"
+      - "*.bz2"
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# ─── OUTPUT: LOGSTASH ─────────────────────────────────────────────────────────
+output.logstash:
+  hosts: ["logstash:5044"]
+  loadbalance: false
+  compression_level: 3
+  bulk_max_size: 512
+  timeout: 30s
+  pipelining: 0
+
+# ─── PROCESSORS ───────────────────────────────────────────────────────────────
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+
+  - timestamp:
+      field: timestamp
+      layouts:
+        - '2006-01-02T15:04:05.999999Z'
+        - '2006-01-02T15:04:05Z'
+      test:
+        - '2024-01-15T10:30:45.123456Z'
+
+  # Drop heartbeat/keepalive events
+  - drop_event:
+      when:
+        equals:
+          eventid: "cowrie.heartbeat.ping"
+
+# ─── QUEUE ────────────────────────────────────────────────────────────────────
+queue.mem:
+  events: 4096
+  flush.min_events: 512
+  flush.timeout: 5s
+
+# ─── LOGGING ──────────────────────────────────────────────────────────────────
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 3
+  permissions: 0640
+
+logging.metrics.enabled: true
+logging.metrics.period: 30s
+
+# ─── MONITORING ───────────────────────────────────────────────────────────────
+monitoring.enabled: false
+
+# ─── HTTP ENDPOINT (for health checks) ───────────────────────────────────────
+http.enabled: true
+http.host: 0.0.0.0
+http.port: 5066

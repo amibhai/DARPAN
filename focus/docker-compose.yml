@@ -1,0 +1,195 @@
+version: "3.9"
+
+networks:
+  darpan-net:
+    name: darpan-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
+
+volumes:
+  esdata:
+    name: focus_esdata
+  logstash-data:
+    name: focus_logstash_data
+
+services:
+
+  # ─── ELASTICSEARCH ────────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-8.11.0}
+    container_name: darpan_elasticsearch
+    restart: always
+
+    labels:
+      com.darpan: "true"
+      com.darpan.role: "focus"
+      com.darpan.service: "elasticsearch"
+
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - bootstrap.memory_lock=true
+      - cluster.name=darpan-cluster
+      - node.name=darpan-es-01
+      - network.host=0.0.0.0
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - indices.query.bool.max_clause_count=8096
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+    networks:
+      darpan-net:
+        ipv4_address: 172.20.0.20
+
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "curl -sf http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=10s || exit 1"
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # ─── LOGSTASH ─────────────────────────────────────────────────────────────
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-8.11.0}
+    container_name: darpan_logstash
+    restart: always
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    labels:
+      com.darpan: "true"
+      com.darpan.role: "focus"
+      com.darpan.service: "logstash"
+
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+      - PIPELINE_WORKERS=2
+      - PIPELINE_BATCH_SIZE=125
+
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - logstash-data:/usr/share/logstash/data
+
+    networks:
+      darpan-net:
+        ipv4_address: 172.20.0.21
+
+    ports:
+      - "172.20.0.21:5044:5044"
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9600/_node/stats || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ─── KIBANA ───────────────────────────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:-8.11.0}
+    container_name: darpan_kibana
+    restart: always
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    labels:
+      com.darpan: "true"
+      com.darpan.role: "focus"
+      com.darpan.service: "kibana"
+
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=darpan-kibana
+      - SERVER_HOST=0.0.0.0
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=darpan-kibana-enc-key-32chars!!
+      - MONITORING_ENABLED=false
+      - TELEMETRY_ENABLED=false
+      - LOGGING_ROOT_APPENDERS=["default"]
+
+    ports:
+      - "127.0.0.1:${KIBANA_PORT:-5601}:5601"
+
+    networks:
+      darpan-net:
+        ipv4_address: 172.20.0.22
+
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "curl -sf http://localhost:5601/api/status | grep -q '\"level\":\"available\"' || exit 1"
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 120s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ─── FILEBEAT ─────────────────────────────────────────────────────────────
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION:-8.11.0}
+    container_name: darpan_filebeat
+    restart: always
+    user: root
+    depends_on:
+      logstash:
+        condition: service_started
+
+    labels:
+      com.darpan: "true"
+      com.darpan.role: "focus"
+      com.darpan.service: "filebeat"
+
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /opt/darpan/logs/cowrie:/cowrie/logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    networks:
+      darpan-net:
+        ipv4_address: 172.20.0.23
+
+    command: filebeat -e -strict.perms=false
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"

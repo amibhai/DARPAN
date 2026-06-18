@@ -1,0 +1,37 @@
+[Unit]
+Description=DARPAN Lure Refresh Scheduler — Polymorphic Honeyfs Regeneration
+Documentation=https://github.com/darpan/darpan
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=darpan
+Group=darpan
+WorkingDirectory=/opt/darpan
+
+EnvironmentFile=-/opt/darpan/.env
+
+ExecStart=/usr/bin/python3 /opt/darpan/lures/lure_scheduler.py
+
+RemainAfterExit=no
+TimeoutStartSec=300
+
+# Resource controls
+MemoryMax=256M
+CPUQuota=30%
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=darpan-lure
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/darpan/reflector /opt/darpan/lures /var/log
+
+Restart=on-failure
+RestartSec=60s
+
+[Install]
+WantedBy=multi-user.target

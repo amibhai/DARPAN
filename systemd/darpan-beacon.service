@@ -1,0 +1,41 @@
+[Unit]
+Description=DARPAN Honeytoken Beacon Daemon
+Documentation=https://github.com/darpan/darpan
+After=network.target docker.service
+Requires=docker.service
+PartOf=darpan.target
+
+[Service]
+Type=simple
+User=darpan
+Group=darpan
+WorkingDirectory=/opt/darpan
+
+# Load .env for HONEYTOKEN_WEBHOOK_URL and COWRIE_LOG_PATH
+EnvironmentFile=-/opt/darpan/.env
+
+ExecStart=/usr/bin/python3 /opt/darpan/lures/honeytoken_beacon.py
+ExecReload=/bin/kill -HUP $MAINPID
+
+Restart=on-failure
+RestartSec=15s
+StartLimitInterval=300s
+StartLimitBurst=5
+
+# Resource controls
+MemoryMax=128M
+CPUQuota=10%
+
+# Logging to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=darpan-beacon
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/darpan/intel/alerts /var/log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,44 @@
+[Unit]
+Description=DARPAN ML Pipeline — One-Shot Analysis Run
+Documentation=https://github.com/darpan/darpan
+After=network.target docker.service elasticsearch.service
+Wants=elasticsearch.service
+
+[Service]
+Type=oneshot
+User=darpan
+Group=darpan
+WorkingDirectory=/opt/darpan/ml
+
+EnvironmentFile=-/opt/darpan/.env
+
+# Full ML pipeline: feature extraction → classify → cluster → report
+ExecStart=/bin/bash -c "\
+    set -euo pipefail; \
+    echo '[darpan-ml] Starting ML pipeline...'; \
+    python3 /opt/darpan/ml/feature_engineering.py && \
+    python3 /opt/darpan/ml/classifier.py && \
+    python3 /opt/darpan/ml/campaign_tracker.py && \
+    echo '[darpan-ml] Pipeline complete.'"
+
+# Save timestamp of last successful run
+ExecStartPost=/bin/bash -c "date > /opt/darpan/ml/.last_retrain"
+
+RemainAfterExit=no
+TimeoutStartSec=1800
+
+# Resource controls — ML can be CPU intensive
+MemoryMax=2G
+CPUQuota=80%
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=darpan-ml
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/darpan/ml /opt/darpan/intel /opt/darpan/reports
+
+[Install]
+WantedBy=multi-user.target

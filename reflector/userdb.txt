@@ -1,0 +1,77 @@
+# DARPAN Cowrie userdb.txt — Credential Honeytokens
+# Format: username:uid:password
+# ! prefix on password = always allow (honeytoken capture)
+# * = match any
+#
+# ALL credentials here use ! to allow login — we WANT attackers in
+
+# ─── COMMON DEFAULTS ──────────────────────────────────────────────────────────
+root:0:!root
+root:0:!toor
+root:0:!password
+root:0:!123456
+root:0:!admin
+root:0:!pass
+root:0:!qwerty
+root:0:!letmein
+root:0:!welcome
+root:0:!root123
+admin:0:!admin
+admin:0:!password
+admin:0:!admin123
+admin:0:!1234
+admin:0:!administrator
+admin:0:!Admin@123
+user:1000:!user
+user:1000:!password
+guest:1001:!guest
+guest:1001:!guest123
+test:1002:!test
+test:1002:!test123
+
+# ─── IoT / EMBEDDED DEFAULTS ──────────────────────────────────────────────────
+pi:1000:!raspberry
+ubnt:0:!ubnt
+support:0:!support
+supervisor:0:!supervisor
+Administrator:500:!admin
+Administrator:500:!password
+admin1:0:!password1
+manager:0:!manager
+operator:0:!operator
+default:0:!default
+enable:0:!enable
+service:0:!service
+cisco:0:!cisco
+netadmin:0:!netadmin
+
+# ─── COMMON LINUX ACCOUNTS ───────────────────────────────────────────────────
+ubuntu:1000:!ubuntu
+debian:1000:!debian
+centos:1000:!centos
+vagrant:1000:!vagrant
+ansible:1000:!ansible
+deploy:1000:!deploy
+git:1001:!git
+
+# ─── FAKE CORPORATE SERVICE ACCOUNTS (Honeytokens) ───────────────────────────
+# These look like leaked enterprise credentials — HIGH VALUE honeytokens
+# Access logged with HONEYTOKEN alert
+svc_backup:2001:!Backup@2023!
+deploy_user:2002:!Deploy#Prod1
+oracle:2003:!oracle123
+postgres:2004:!postgres2023
+mysql_admin:2005:!Mysql!Admin99
+jira_svc:2006:!Jira@Service1
+jenkins:2007:!Jenkins#Build2
+gitlab_runner:2008:!GitRunner@CI3
+k8s_admin:2009:!K8s@Cluster01
+vault_user:2010:!Vault$Secret22
+
+# ─── UNIQUE HONEYTOKENS (Fingerprinted — alert on exact match) ───────────────
+# These will NEVER appear in real credential leaks — use as canaries
+prod_maint:9001:!xK9#mPqR2vL8nW
+db_rotate:9002:!zT7@jHsF4xN1cQ
+sec_audit:9003:!pY5$vBkM8wR3dE
+infra_ops:9004:!hL2#nCxP6tV9bZ
+backup_key:9005:!wQ4@rDgJ7kS0mX

@@ -267,7 +267,7 @@ DARPAN maps observed adversary behavior to the following ATT&CK tactics and tech
 All dependencies are installed automatically by `01_system_prep.sh`. For reference:
 
 - Docker + Docker Compose
-- Python 3.11+
+- Python 3.11+ (Python 3.12 recommended)
 - `scikit-learn`, `shap`, `faker`, `elasticsearch-py`, `pandas`, `numpy`
 - `matplotlib`, `seaborn`, `requests`, `python-dotenv`
 - `iptables-persistent`, `fail2ban`, `auditd`

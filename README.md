@@ -147,7 +147,7 @@ The intelligence brain. A containerized **ELK stack** (Elasticsearch, Logstash, 
 - Inter-arrival time (IAT) analysis to distinguish human vs. automated behavior
 - Command n-gram modeling (bigrams, trigrams) for behavioral fingerprinting
 - Payload entropy scoring to detect obfuscation and encoding patterns
-- Random Forest classifier with 200 estimators, balanced class weighting
+- Random Forest classifier with 200 estimators, hyperparameter-optimized, and balanced class weighting
 - DBSCAN campaign clustering with automatic parameter tuning
 - SHAP explainability with visual summary plots and per-session analyst narratives
 

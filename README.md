@@ -47,7 +47,7 @@
 
 ## Overview
 
-**DARPAN** (Digital Asset Reflection and Proactive Analysis Network) is a next-generation, hybrid-adaptive cyber deception framework designed for threat actor profiling, APT campaign tracking, and proactive intelligence collection. It transitions cybersecurity defense from passive perimeters to active, high-fidelity deception environments that collect adversarial intelligence at every stage of an attack lifecycle.
+**DARPAN** (Digital Asset Reflection and Proactive Analysis Network) is a next-generation, hybrid-adaptive, and context-aware cyber deception framework designed for threat actor profiling, APT campaign tracking, and proactive intelligence collection. It transitions cybersecurity defense from passive perimeters to active, high-fidelity deception environments that collect adversarial intelligence at every stage of an attack lifecycle.
 
 DARPAN is built for deployment across **IT, Cloud, and OT** environments and is intended for use by security researchers, threat intelligence teams, and SOC analysts who require research-grade attribution-level data.
 

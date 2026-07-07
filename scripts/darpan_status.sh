@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # DARPAN Real-Time Status Dashboard
+# Run this script as root to monitor honeypot health and statistics
 set -euo pipefail
 
 DARPAN_ROOT="/opt/darpan"

@@ -232,6 +232,7 @@ log "TLS certificates generated."
 
 # ─── 10. FIREWALL HARDENING ──────────────────────────────────────────────────
 log "Applying basic host firewall rules (UFW or iptables)..."
+# Apply rules to ensure honeypot isolation
 # Ensure iptables-persistent is configured to load on boot
 systemctl enable netfilter-persistent 2>/dev/null || true
 

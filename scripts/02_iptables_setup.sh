@@ -129,6 +129,7 @@ iptables -I INPUT -p tcp --dport 2244 -m state --state NEW \
 
 # ─── 7. SAVE RULES ───────────────────────────────────────────────────────────
 log "Saving iptables rules with netfilter-persistent..."
+# Ensure rules persist across reboots
 netfilter-persistent save
 log "Rules saved to /etc/iptables/rules.v4 and rules.v6"
 

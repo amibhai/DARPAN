@@ -85,6 +85,7 @@ fi
 
 # ─── 4. IPTABLES SETUP ───────────────────────────────────────────────────────
 section "4. iptables NAT Setup"
+# Apply the iptables setup script to configure NAT and containment
 bash "$DARPAN_ROOT/scripts/02_iptables_setup.sh"
 ok "iptables rules applied"
 
